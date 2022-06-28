@@ -199,8 +199,8 @@ void MainThread::search() {
       sync_cout << "info depth 0 score "
                 << UCI::value(rootPos.checkers() ? -VALUE_MATE : VALUE_DRAW)
                 << sync_endl;
-  } else if (pos.count<ALL_PIECES>() == 3) {
-    if(pos.count<ALL_PIECES>(us) >= 2) {
+  } else if (rootPos.count<ALL_PIECES>() == 3) {
+    if(rootPos.count<ALL_PIECES>(us) >= 2) {
     rootMoves.emplace_back(MOVE_NONE);
       sync_cout << "info depth 0 score "
                 << UCI::value(VALUE_MATE)
@@ -211,6 +211,7 @@ void MainThread::search() {
                 << UCI::value(-VALUE_MATE)
                 << sync_endl;
     }
+  }
   }
   else
   {
@@ -925,6 +926,8 @@ namespace {
         && !ttMove)
         depth--;
 
+if (!excludedMove && pos.count<ALL_PIECES>(us) == 3) return pos.count<ALL_PIECES>(us) > pos.count<ALL_PIECES>(them) ? mate_in(0) : mated_in(0)
+
 moves_loop: // When in check, search starts here
 
     // Step 12. A small Probcut idea, when we are in check (~0 Elo)
@@ -1349,15 +1352,7 @@ moves_loop: // When in check, search starts here
         bestValue = excludedMove ? alpha :
                     ss->inCheck  ? mated_in(ss->ply)
                                  : VALUE_DRAW;
-                                 else if (pos.count<ALL_PIECES>() == 3) {
-    if(pos.count<ALL_PIECES>(us) >= 2) {
-   bestValue = excludedMove ? alpha :
-                    mate_in(ss->ply);
-    } else {
-    bestValue = excludedMove ? alpha :
-                    mated_in(ss->ply);
-    }
-    }
+                                 
     // If there is a move which produces search value greater than alpha we update stats of searched moves
     else if (bestMove)
         update_all_stats(pos, ss, bestMove, bestValue, beta, prevSq,
