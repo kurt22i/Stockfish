@@ -197,9 +197,9 @@ void MainThread::search() {
   {
       rootMoves.emplace_back(MOVE_NONE);
       sync_cout << "info depth 0 score "
-                << UCI::value(rootPos.checkers() ? -VALUE_MATE : VALUE_DRAW)
+                << UCI::value(-VALUE_MATE)
                 << sync_endl;
-  } else if (rootPos.count<ALL_PIECES>() == 3) {
+  } /*else if (rootPos.count<ALL_PIECES>() == 3) {
     if(rootPos.count<ALL_PIECES>(us) >= 2) {
     rootMoves.emplace_back(MOVE_NONE);
       sync_cout << "info depth 0 score "
@@ -210,7 +210,7 @@ void MainThread::search() {
       sync_cout << "info depth 0 score "
                 << UCI::value(-VALUE_MATE)
                 << sync_endl;
-    }
+    }*/
   }
   else
   {
@@ -537,17 +537,40 @@ namespace {
     constexpr bool PvNode = nodeType != NonPV;
     constexpr bool rootNode = nodeType == Root;
     const Depth maxNextDepth = rootNode ? depth : depth + 1;
+    Color us           = pos.side_to_move();
 
     // Check if we have an upcoming move which draws by repetition, or
     // if the opponent had an alternative move earlier to this position.
     if (   !rootNode
         && pos.rule50_count() >= 3
-        && alpha < VALUE_DRAW
         && pos.has_game_cycle(ss->ply))
     {
-        alpha = value_draw(pos.this_thread());
+        Value opp; //we have an opportunity to get this value
+        if(pos.checkers()) {
+            opp = -VALUE_MATE;
+        } else {
+            int ourmoves = MoveList<LEGAL>(pos).size();
+            StateInfo st1;
+            pos.do_null_move(st1);
+            int theirmoves = MoveList<LEGAL>(pos).size();
+            pos.undo_null_move();
+            if(ourmoves > theirmoves) {
+                opp = VALUE_MATE;
+            } else if(ourmoves < theirmoves) {
+                opp = -VALUE_MATE;
+            } else {
+                opp = VALUE_DRAW;
+            }
+        }
+        if(alpha < opp) {
+            if(opp == VALUE_DRAW) {
+                alpha = value_draw(pos.this_thread());
+            } else {
+                alpha = opp;
+            }
         if (alpha >= beta)
             return alpha;
+        }
     }
 
     // Dive into quiescence search when the depth reaches zero
@@ -578,7 +601,6 @@ namespace {
     thisThread->depth  = depth;
     ss->inCheck        = pos.checkers();
     priorCapture       = pos.captured_piece();
-    Color us           = pos.side_to_move();
     moveCount          = captureCount = quietCount = ss->moveCount = 0;
     bestValue          = -VALUE_INFINITE;
     maxValue           = VALUE_INFINITE;
@@ -603,9 +625,30 @@ namespace {
         // Step 2. Check for aborted search and immediate draw
         if (   Threads.stop.load(std::memory_order_relaxed)
             || pos.is_draw(ss->ply)
-            || ss->ply >= MAX_PLY)
-            return (ss->ply >= MAX_PLY && !ss->inCheck) ? evaluate(pos)
-                                                        : value_draw(pos.this_thread());
+            || ss->ply >= MAX_PLY) {
+                if (ss->ply >= MAX_PLY && !ss->inCheck) {
+                    return evaluate(pos);
+                } else {
+                    Value opp; //we have an opportunity to get this value
+        if(ss->inCheck) {
+            opp = -VALUE_MATE;
+        } else {
+            int ourmoves = MoveList<LEGAL>(pos).size();
+            StateInfo st1;
+            pos.do_null_move(st1);
+            int theirmoves = MoveList<LEGAL>(pos).size();
+            pos.undo_null_move();
+            if(ourmoves > theirmoves) {
+                opp = VALUE_MATE;
+            } else if(ourmoves < theirmoves) {
+                opp = -VALUE_MATE;
+            } else {
+                opp = value_draw(pos.this_thread());
+            }
+        }
+        return opp;
+            }
+            }
 
         // Step 3. Mate distance pruning. Even if we mate at the next move our score
         // would be at best mate_in(ss->ply+1), but if alpha is already bigger because
@@ -1353,9 +1396,7 @@ moves_loop: // When in check, search starts here
     assert(moveCount || !ss->inCheck || excludedMove || !MoveList<LEGAL>(pos).size());
 
     if (!moveCount)
-        bestValue = excludedMove ? alpha :
-                    ss->inCheck  ? mated_in(ss->ply)
-                                 : VALUE_DRAW;
+        bestValue = excludedMove ? alpha : mated_in(ss->ply);
                                 
     // If there is a move which produces search value greater than alpha we update stats of searched moves
     else if (bestMove)
@@ -1434,8 +1475,30 @@ moves_loop: // When in check, search starts here
 
     // Check for an immediate draw or maximum ply reached
     if (   pos.is_draw(ss->ply)
-        || ss->ply >= MAX_PLY)
-        return (ss->ply >= MAX_PLY && !ss->inCheck) ? evaluate(pos) : VALUE_DRAW;
+        || ss->ply >= MAX_PLY) {
+ if (ss->ply >= MAX_PLY && !ss->inCheck) {
+                    return evaluate(pos);
+                } else {
+                    Value opp; //we have an opportunity to get this value
+        if(ss->inCheck) {
+            opp = -VALUE_MATE;
+        } else {
+            int ourmoves = MoveList<LEGAL>(pos).size();
+            StateInfo st1;
+            pos.do_null_move(st1);
+            int theirmoves = MoveList<LEGAL>(pos).size();
+            pos.undo_null_move();
+            if(ourmoves > theirmoves) {
+                opp = VALUE_MATE;
+            } else if(ourmoves < theirmoves) {
+                opp = -VALUE_MATE;
+            } else {
+                opp = VALUE_DRAW;
+            }
+        }
+        return opp;
+            }
+        }
 
     assert(0 <= ss->ply && ss->ply < MAX_PLY);
 
