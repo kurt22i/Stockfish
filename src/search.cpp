@@ -197,7 +197,7 @@ void MainThread::search() {
   {
       rootMoves.emplace_back(MOVE_NONE);
       sync_cout << "info depth 0 score "
-                << UCI::value(rootPos.checkers() ? -VALUE_MATE : VALUE_DRAW)
+                << UCI::value(-VALUE_MATE)
                 << sync_endl;
   } else if (rootPos.count<ALL_PIECES>() == 3) {
     if(rootPos.count<ALL_PIECES>(us) >= 2) {
@@ -540,7 +540,7 @@ namespace {
 
     // Check if we have an upcoming move which draws by repetition, or
     // if the opponent had an alternative move earlier to this position.
-    if (   !rootNode
+   /*if (   !rootNode
         && pos.rule50_count() >= 3
         && alpha < VALUE_DRAW
         && pos.has_game_cycle(ss->ply))
@@ -548,7 +548,7 @@ namespace {
         alpha = value_draw(pos.this_thread());
         if (alpha >= beta)
             return alpha;
-    }
+    }*/
 
     // Dive into quiescence search when the depth reaches zero
     if (depth <= 0)
@@ -600,6 +600,9 @@ namespace {
       return mated_in(0);
     }
     }
+
+
+
         // Step 2. Check for aborted search and immediate draw
         if (   Threads.stop.load(std::memory_order_relaxed)
             || pos.is_draw(ss->ply)
@@ -1353,9 +1356,7 @@ moves_loop: // When in check, search starts here
     assert(moveCount || !ss->inCheck || excludedMove || !MoveList<LEGAL>(pos).size());
 
     if (!moveCount)
-        bestValue = excludedMove ? alpha :
-                    ss->inCheck  ? mated_in(ss->ply)
-                                 : VALUE_DRAW;
+        bestValue = excludedMove ? alpha : mated_in(ss->ply);
                                 
     // If there is a move which produces search value greater than alpha we update stats of searched moves
     else if (bestMove)
