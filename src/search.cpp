@@ -593,6 +593,13 @@ namespace {
 
     if (!rootNode)
     {
+    if (pos.count<ALL_PIECES>() == 3) {
+    if(pos.count<ALL_PIECES>(us) >= 2) {
+      return mate_in(0);
+    } else {
+      return mated_in(0);
+    }
+    }
         // Step 2. Check for aborted search and immediate draw
         if (   Threads.stop.load(std::memory_order_relaxed)
             || pos.is_draw(ss->ply)
@@ -924,14 +931,6 @@ namespace {
         &&  depth >= 8
         && !ttMove)
         depth--;
-        
-        if (!excludedMove && pos.count<ALL_PIECES>() == 3) {
-    if(pos.count<ALL_PIECES>(us) >= 2) {
-      return mate_in(0);
-    } else {
-      return mated_in(0);
-    }
-    }
 
 moves_loop: // When in check, search starts here
 
