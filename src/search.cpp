@@ -199,8 +199,8 @@ void MainThread::search() {
       sync_cout << "info depth 0 score "
                 << UCI::value(rootPos.checkers() ? -VALUE_MATE : VALUE_DRAW)
                 << sync_endl;
-  } else if (pos.count<ALL_PIECES>() == 3) {
-    if(pos.count<ALL_PIECES>(us) >= 2) {
+  } else if (rootPos.count<ALL_PIECES>() == 3) {
+    if(rootPos.count<ALL_PIECES>(us) >= 2) {
     rootMoves.emplace_back(MOVE_NONE);
       sync_cout << "info depth 0 score "
                 << UCI::value(VALUE_MATE)
@@ -925,7 +925,13 @@ namespace {
         && !ttMove)
         depth--;
         
-        if (!excludedMove && pos.count<ALL_PIECES>(us) == 3) return pos.count<ALL_PIECES>(us) > pos.count<ALL_PIECES>(them) ? mate_in(0) : mated_in(0)
+        if (!excludedMove && pos.count<ALL_PIECES>() == 3) {
+    if(pos.count<ALL_PIECES>(us) >= 2) {
+      return mate_in(0)
+    } else {
+      return mated_in(0)
+    }
+    }
 
 moves_loop: // When in check, search starts here
 
