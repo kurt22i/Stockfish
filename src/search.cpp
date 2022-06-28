@@ -924,6 +924,8 @@ namespace {
         &&  depth >= 8
         && !ttMove)
         depth--;
+        
+        if (!excludedMove && pos.count<ALL_PIECES>(us) == 3) return pos.count<ALL_PIECES>(us) > pos.count<ALL_PIECES>(them) ? mate_in(0) : mated_in(0)
 
 moves_loop: // When in check, search starts here
 
@@ -1349,15 +1351,7 @@ moves_loop: // When in check, search starts here
         bestValue = excludedMove ? alpha :
                     ss->inCheck  ? mated_in(ss->ply)
                                  : VALUE_DRAW;
-                                 else if (pos.count<ALL_PIECES>() == 3) {
-    if(pos.count<ALL_PIECES>(us) >= 2) {
-   bestValue = excludedMove ? alpha :
-                    mate_in(ss->ply);
-    } else {
-    bestValue = excludedMove ? alpha :
-                    mated_in(ss->ply);
-    }
-    }
+                                
     // If there is a move which produces search value greater than alpha we update stats of searched moves
     else if (bestMove)
         update_all_stats(pos, ss, bestMove, bestValue, beta, prevSq,
