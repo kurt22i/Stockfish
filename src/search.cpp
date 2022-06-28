@@ -210,8 +210,8 @@ void MainThread::search() {
       sync_cout << "info depth 0 score "
                 << UCI::value(-VALUE_MATE)
                 << sync_endl;
-    }*/
-  }
+    }
+  }*/
   else
   {
       Threads.start_searching(); // start non-main threads
@@ -615,13 +615,13 @@ namespace {
 
     if (!rootNode)
     {
-    if (pos.count<ALL_PIECES>() == 3) {
+   /* if (pos.count<ALL_PIECES>() == 3) {
     if(pos.count<ALL_PIECES>(us) >= 2) {
       return mate_in(0);
     } else {
       return mated_in(0);
     }
-    }
+    }*/
         // Step 2. Check for aborted search and immediate draw
         if (   Threads.stop.load(std::memory_order_relaxed)
             || pos.is_draw(ss->ply)
