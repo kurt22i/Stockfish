@@ -927,9 +927,9 @@ namespace {
         
         if (!excludedMove && pos.count<ALL_PIECES>() == 3) {
     if(pos.count<ALL_PIECES>(us) >= 2) {
-      return mate_in(0)
+      return mate_in(0);
     } else {
-      return mated_in(0)
+      return mated_in(0);
     }
     }
 
