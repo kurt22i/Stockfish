@@ -199,6 +199,18 @@ void MainThread::search() {
       sync_cout << "info depth 0 score "
                 << UCI::value(rootPos.checkers() ? -VALUE_MATE : VALUE_DRAW)
                 << sync_endl;
+  } else if (pos.count<ALL_PIECES>() == 3) {
+    if(pos.count<ALL_PIECES>(us) >= 2) {
+    rootMoves.emplace_back(MOVE_NONE);
+      sync_cout << "info depth 0 score "
+                << UCI::value(VALUE_MATE)
+                << sync_endl;
+    } else {
+    rootMoves.emplace_back(MOVE_NONE);
+      sync_cout << "info depth 0 score "
+                << UCI::value(-VALUE_MATE)
+                << sync_endl;
+    }
   }
   else
   {
@@ -1337,7 +1349,15 @@ moves_loop: // When in check, search starts here
         bestValue = excludedMove ? alpha :
                     ss->inCheck  ? mated_in(ss->ply)
                                  : VALUE_DRAW;
-
+                                 else if (pos.count<ALL_PIECES>() == 3) {
+    if(pos.count<ALL_PIECES>(us) >= 2) {
+   bestValue = excludedMove ? alpha :
+                    mate_in(ss->ply);
+    } else {
+    bestValue = excludedMove ? alpha :
+                    mated_in(ss->ply);
+    }
+    }
     // If there is a move which produces search value greater than alpha we update stats of searched moves
     else if (bestMove)
         update_all_stats(pos, ss, bestMove, bestValue, beta, prevSq,
