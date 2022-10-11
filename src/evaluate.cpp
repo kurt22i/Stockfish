@@ -1042,38 +1042,6 @@ make_v:
     return v;
   }
 
-
-  /// Fisher Random Chess: correction for cornered bishops, to fix chess960 play with NNUE
-
-  Value fix_FRC(const Position& pos) {
-
-    constexpr Bitboard Corners =  1ULL << SQ_A1 | 1ULL << SQ_H1 | 1ULL << SQ_A8 | 1ULL << SQ_H8;
-
-    if (!(pos.pieces(BISHOP) & Corners))
-        return VALUE_ZERO;
-
-    int correction = 0;
-
-    if (   pos.piece_on(SQ_A1) == W_BISHOP
-        && pos.piece_on(SQ_B2) == W_PAWN)
-        correction -= CorneredBishop;
-
-    if (   pos.piece_on(SQ_H1) == W_BISHOP
-        && pos.piece_on(SQ_G2) == W_PAWN)
-        correction -= CorneredBishop;
-
-    if (   pos.piece_on(SQ_A8) == B_BISHOP
-        && pos.piece_on(SQ_B7) == B_PAWN)
-        correction += CorneredBishop;
-
-    if (   pos.piece_on(SQ_H8) == B_BISHOP
-        && pos.piece_on(SQ_G7) == B_PAWN)
-        correction += CorneredBishop;
-
-    return pos.side_to_move() == WHITE ?  Value(3 * correction)
-                                       : -Value(3 * correction);
-  }
-
 } // namespace Eval
 
 
@@ -1085,37 +1053,27 @@ Value Eval::evaluate(const Position& pos, int* complexity) {
   Value v;
   Color stm = pos.side_to_move();
   Value psq = pos.psq_eg_stm();
-  // Deciding between classical and NNUE eval (~10 Elo): for high PSQ imbalance we use classical,
-  // but we switch to NNUE during long shuffling or with high material on the board.
-  bool useClassical =    (pos.this_thread()->depth > 9 || pos.count<ALL_PIECES>() > 7)
-                      && abs(psq) * 5 > (856 + pos.non_pawn_material() / 64) * (10 + pos.rule50_count());
 
-  // Deciding between classical and NNUE eval (~10 Elo): for high PSQ imbalance we use classical,
-  // but we switch to NNUE during long shuffling or with high material on the board.
-  if (!useNNUE || useClassical)
-  {
+  // We use the much less accurate but faster Classical eval when the NNUE
+  // option is set to false. Otherwise we use the NNUE eval unless the
+  // PSQ advantage is decisive and several pieces remain (~3 Elo)
+  bool useClassical = !useNNUE || (pos.count<ALL_PIECES>() > 7 && abs(psq) > 1760);
+  if (useClassical)
       v = Evaluation<NO_TRACE>(pos).value();
-      useClassical = abs(v) >= 297;
-  }
-
-  // If result of a classical evaluation is much lower than threshold fall back to NNUE
-  if (useNNUE && !useClassical)
+  else
   {
-       int nnueComplexity;
-       int scale = 1092 + 106 * pos.non_pawn_material() / 5120;
-       Value optimism = pos.this_thread()->optimism[stm];
+      int nnueComplexity;
+      int scale = 1064 + 106 * pos.non_pawn_material() / 5120;
+      Value optimism = pos.this_thread()->optimism[stm];
 
-       Value nnue = NNUE::evaluate(pos, true, &nnueComplexity);
-       // Blend nnue complexity with (semi)classical complexity
-       nnueComplexity = (104 * nnueComplexity + 131 * abs(nnue - psq)) / 256;
-       if (complexity) // Return hybrid NNUE complexity to caller
-           *complexity = nnueComplexity;
+      Value nnue = NNUE::evaluate(pos, true, &nnueComplexity);
+      // Blend nnue complexity with (semi)classical complexity
+      nnueComplexity = (104 * nnueComplexity + 131 * abs(nnue - psq)) / 256;
+      if (complexity) // Return hybrid NNUE complexity to caller
+          *complexity = nnueComplexity;
 
-       optimism = optimism * (269 + nnueComplexity) / 256;
-       v = (nnue * scale + optimism * (scale - 754)) / 1024;
-
-       if (pos.is_chess960())
-           v += fix_FRC(pos);
+      optimism = optimism * (269 + nnueComplexity) / 256;
+      v = (nnue * scale + optimism * (scale - 754)) / 1024;
   }
 
   // Damp down the evaluation linearly when shuffling
@@ -1126,7 +1084,7 @@ Value Eval::evaluate(const Position& pos, int* complexity) {
 
   // When not using NNUE, return classical complexity to caller
   if (complexity && (!useNNUE || useClassical))
-       *complexity = abs(v - psq);
+      *complexity = abs(v - psq);
 
   return v;
 }
@@ -1149,7 +1107,6 @@ std::string Eval::trace(Position& pos) {
   std::memset(scores, 0, sizeof(scores));
 
   // Reset any global variable used in eval
-  pos.this_thread()->depth           = 0;
   pos.this_thread()->trend           = SCORE_ZERO;
   pos.this_thread()->bestValue       = VALUE_ZERO;
   pos.this_thread()->optimism[WHITE] = VALUE_ZERO;
