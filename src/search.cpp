@@ -1560,7 +1560,8 @@ moves_loop: // When in check, search starts here
           && ss->inCheck)
           continue;
 
-      if (pos.rule50_count() > 39)
+      if (   bestValue > VALUE_TB_LOSS_IN_MAX_PLY
+          && pos.rule50_count() > 39 )
           continue;
 
       quietCheckEvasions += !capture && ss->inCheck;
