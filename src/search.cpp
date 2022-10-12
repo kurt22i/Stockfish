@@ -1560,7 +1560,7 @@ moves_loop: // When in check, search starts here
           && ss->inCheck)
           continue;
 
-      if (pos.rule50_count() > 20)
+      if (pos.rule50_count() > 39)
           continue;
 
       quietCheckEvasions += !capture && ss->inCheck;
