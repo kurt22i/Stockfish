@@ -1490,6 +1490,15 @@ moves_loop: // When in check, search starts here
                                       contHist,
                                       prevSq);
 
+    // Set up the improvement variable, which is the difference between the current
+    // static evaluation and the previous static evaluation at our turn (if we were
+    // in check at our previous move we look at the move prior to it). The improvement
+    // margin and the improving flag are used in various pruning heuristics.
+    int improvement =   (ss-2)->staticEval != VALUE_NONE ? ss->staticEval - (ss-2)->staticEval
+                      : (ss-4)->staticEval != VALUE_NONE ? ss->staticEval - (ss-4)->staticEval
+                      :                                    168;
+    bool improving = improvement > 0;
+
     int quietCheckEvasions = 0;
 
     // Loop through the moves until no moves remain or a beta cutoff occurs
@@ -1558,6 +1567,11 @@ moves_loop: // When in check, search starts here
           && quietCheckEvasions > 1
           && !capture
           && ss->inCheck)
+          continue;
+
+      if (   bestValue > VALUE_TB_LOSS_IN_MAX_PLY
+          && pos.rule50_count() > 19
+          && !improving )
           continue;
 
       quietCheckEvasions += !capture && ss->inCheck;
