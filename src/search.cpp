@@ -1683,6 +1683,9 @@ moves_loop: // When in check, search starts here
         // Increase stats for the best move in case it was a quiet move
         update_quiet_stats(pos, ss, bestMove, bonus2);
 
+        // Increase the malus in unchanging positions
+        bonus2 += 4 * pos.rule50_count();
+
         // Decrease stats for all non-best quiet moves
         for (int i = 0; i < quietCount; ++i)
         {
