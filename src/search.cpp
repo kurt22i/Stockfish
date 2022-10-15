@@ -769,6 +769,7 @@ namespace {
     // margin and the improving flag are used in various pruning heuristics.
     improvement =   (ss-2)->staticEval != VALUE_NONE ? ss->staticEval - (ss-2)->staticEval
                   : (ss-4)->staticEval != VALUE_NONE ? ss->staticEval - (ss-4)->staticEval
+                  : (ss-6)->staticEval != VALUE_NONE ? ss->staticEval - (ss-6)->staticEval
                   :                                    168;
     improving = improvement > 0;
 
