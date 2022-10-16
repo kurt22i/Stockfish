@@ -1256,7 +1256,8 @@ moves_loop: // When in check, search starts here
               // This information is used for time management. In MultiPV mode,
               // we must take care to only do this for the first PV line.
               if (   moveCount > 1
-                  && !thisThread->pvIdx)
+                  && !thisThread->pvIdx
+                  && !(ss+1)->ttPv)
                   ++thisThread->bestMoveChanges;
           }
           else
