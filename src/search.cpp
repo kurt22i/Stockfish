@@ -721,6 +721,10 @@ namespace {
 
     CapturePieceToHistory& captureHistory = thisThread->captureHistory;
 
+    improvement =   (ss-4)->staticEval != VALUE_NONE ? (ss-2)->staticEval - (ss-4)->staticEval
+                  : (ss-6)->staticEval != VALUE_NONE ? (ss-2)->staticEval - (ss-6)->staticEval
+                  :                                    168;
+
     // Step 6. Static evaluation of the position
     if (ss->inCheck)
     {
@@ -736,7 +740,7 @@ namespace {
         // Never assume anything about values stored in TT
         ss->staticEval = eval = tte->eval();
         if (eval == VALUE_NONE)
-            ss->staticEval = eval = evaluate(pos, &complexity);
+            ss->staticEval = eval = evaluate(pos, &complexity) + improvement / 2;
         else // Fall back to (semi)classical complexity for TT hits, the NNUE complexity is lost
             complexity = abs(ss->staticEval - pos.psq_eg_stm());
 
@@ -747,7 +751,7 @@ namespace {
     }
     else
     {
-        ss->staticEval = eval = evaluate(pos, &complexity);
+        ss->staticEval = eval = evaluate(pos, &complexity) + improvement / 2;
 
         // Save static evaluation into transposition table
         if (!excludedMove)
