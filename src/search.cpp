@@ -435,6 +435,8 @@ void Thread::search() {
           completedDepth = rootDepth;
 
       if (rootMoves[0].pv[0] != lastBestMove) {
+         if(lastBestMove == rootMoves[0].pv[1])
+            totBestMoveChanges--;
          lastBestMove = rootMoves[0].pv[0];
          lastBestMoveDepth = rootDepth;
       }
