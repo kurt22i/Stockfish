@@ -58,6 +58,15 @@ using namespace std;
 
 namespace Stockfish {
 
+    int v1 = 17;
+    int v2 = 3;
+    int v3 = 10;
+    int v4 = 10;
+    int v5 = 10;
+    int v6 = 8145;
+    int v7 = 9000;
+    TUNE(v1, v2, v3, v4, v5, v6, v7);
+
 namespace Eval {
 
   bool useNNUE;
@@ -1084,8 +1093,13 @@ Value Eval::evaluate(const Position& pos, int* complexity) {
       v = (nnue * scale + optimism * (scale - 754)) / 1024;
   }
 
-  // Damp down the evaluation linearly when shuffling
-  v = v * (195 - pos.rule50_count()) / 211;
+  // Damp down the evaluation linearly when shuffling,
+  // depending on the number of pawns
+  v = v * (
+           -(v1 + v2 * std::max(pos.count<PAWN>(), v3))
+           *(std::max(pos.rule50_count(), v4) - v5) 
+           + v6) 
+       / v7;
 
   // Guarantee evaluation does not hit the tablebase range
   v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
