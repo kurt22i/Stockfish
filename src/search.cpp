@@ -1092,6 +1092,14 @@ moves_loop: // When in check, search starts here
                   extension = -1;
           }
 
+          else if (   capture
+                   && !improving
+                   && depth < 9
+                   && abs(ss->staticEval) > 82
+                   && (   pos.pawns_on_same_color_squares(us, SQ_A1) >= 6
+                       || pos.pawns_on_same_color_squares(us, SQ_H1) >= 6))
+              extension = 1;
+
           // Check extensions (~1 Elo)
           else if (   givesCheck
                    && depth > 9
