@@ -1092,6 +1092,12 @@ moves_loop: // When in check, search starts here
                   extension = -1;
           }
 
+          // Complex capture extensions
+          else if (   capture
+                   && depth <= 8
+                   && complexity > 625)
+              extension = 1;
+
           // Check extensions (~1 Elo)
           else if (   givesCheck
                    && depth > 9
