@@ -756,13 +756,6 @@ namespace {
 
     thisThread->complexityAverage.update(complexity);
 
-    // Use static evaluation difference to improve quiet move ordering (~3 Elo)
-    if (is_ok((ss-1)->currentMove) && !(ss-1)->inCheck && !priorCapture)
-    {
-        int bonus = std::clamp(-19 * int((ss-1)->staticEval + ss->staticEval), -1914, 1914);
-        thisThread->mainHistory[~us][from_to((ss-1)->currentMove)] << bonus;
-    }
-
     // Set up the improvement variable, which is the difference between the current
     // static evaluation and the previous static evaluation at our turn (if we were
     // in check at our previous move we look at the move prior to it). The improvement
@@ -771,6 +764,13 @@ namespace {
                   : (ss-4)->staticEval != VALUE_NONE ? ss->staticEval - (ss-4)->staticEval
                   :                                    168;
     improving = improvement > 0;
+
+    // Use static evaluation difference to improve quiet move ordering (~3 Elo)
+    if (is_ok((ss-1)->currentMove) && !(ss-1)->inCheck && !priorCapture)
+    {
+        int bonus = std::clamp(-19 * int((ss-1)->staticEval + ss->staticEval + improvement / 10), -1914, 1914);
+        thisThread->mainHistory[~us][from_to((ss-1)->currentMove)] << bonus;
+    }
 
     // Step 7. Razoring.
     // If eval is really low check with qsearch if it can exceed alpha, if it can't,
