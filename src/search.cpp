@@ -1102,7 +1102,6 @@ moves_loop: // When in check, search starts here
           else if (   PvNode
                    && move == ttMove
                    && move == ss->killers[0]
-                   && pos.rule50_count() <= 13
                    && (*contHist[0])[movedPiece][to_sq(move)] >= 5177)
               extension = 1;
       }
