@@ -699,6 +699,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   // in case of a capture or a pawn move.
   ++gamePly;
   ++st->rule50;
+  ++st->pliesSinceProgress;
   ++st->pliesFromNull;
 
   // Used by NNUE
@@ -750,9 +751,16 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
           }
 
           st->pawnKey ^= Zobrist::psq[captured][capsq];
+          st->pliesSinceProgress = 0;
       }
       else
+      {
           st->nonPawnMaterial[them] -= PieceValue[MG][captured];
+          if (   st->rule50 == 0 
+              && st->pliesFromNull > 2
+              && st->previous->previous->rule50 <= 20)
+            st->pliesSinceProgress = 0;
+      }
 
       if (Eval::useNNUE)
       {
@@ -847,10 +855,17 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
 
           // Update material
           st->nonPawnMaterial[us] += PieceValue[MG][promotion];
+
+          // Reset progress counter
+          st->pliesSinceProgress = 0;
       }
 
       // Update pawn hash key
       st->pawnKey ^= Zobrist::psq[pc][from] ^ Zobrist::psq[pc][to];
+
+      // Conditionally reset progress counter
+      if(st->rule50 <= 20 || relative_rank(us, to) >= RANK_6)
+          st->pliesSinceProgress = 0;
 
       // Reset rule 50 draw counter
       st->rule50 = 0;
