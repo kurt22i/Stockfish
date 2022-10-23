@@ -751,6 +751,8 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
           }
 
           st->pawnKey ^= Zobrist::psq[captured][capsq];
+
+          st->pliesSinceProgress = 0;
       }
       else
           st->nonPawnMaterial[them] -= PieceValue[MG][captured];
@@ -774,8 +776,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       st->materialKey ^= Zobrist::psq[captured][pieceCount[captured]];
       prefetch(thisThread->materialTable[st->materialKey]);
 
-      // Reset progress counters
-      st->pliesSinceProgress = 0;
+      // Reset rule50 counter
       st->rule50 = 0;
   }
 
@@ -1023,6 +1024,7 @@ void Position::do_null_move(StateInfo& newSt) {
 
   st->key ^= Zobrist::side;
   ++st->rule50;
+  ++st->pliesSinceProgress;
   prefetch(TT.first_entry(key()));
 
   st->pliesFromNull = 0;
