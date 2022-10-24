@@ -756,10 +756,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       else
       {
           st->nonPawnMaterial[them] -= PieceValue[MG][captured];
-          if (   st->rule50 <= 1
-              && st->pliesFromNull > 2
-              && st->previous->previous->rule50 <= 20)
-            st->pliesSinceProgress = 0;
+          st->pliesSinceProgress = 3 * st->pliesSinceProgress / 4;
       }
 
       if (Eval::useNNUE)
