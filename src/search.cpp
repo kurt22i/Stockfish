@@ -472,7 +472,9 @@ void Thread::search() {
           timeReduction = lastBestMoveDepth + 9 < completedDepth ? 1.37 : 0.65;
           double reduction = (1.4 + mainThread->previousTimeReduction) / (2.15 * timeReduction);
           double bestMoveInstability = 1 + 1.7 * totBestMoveChanges / Threads.size();
-          double staticPosition = (rootPos.rule50_count() >= 40 && rootPos.count<PAWN>() >= 12) ? 0.5 : 1;
+          double staticPosition = (   rootPos.rule50_count() >= 40
+                                   && rootPos.count<PAWN>() >= 12
+                                   && rootPos.rule50_count() <= 80) ? 0.15 : 1;
 
           double totalTime = Time.optimum() * fallingEval * reduction * bestMoveInstability * staticPosition;
 
