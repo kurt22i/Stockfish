@@ -476,8 +476,8 @@ void Thread::search() {
                                    && rootPos.count<PAWN>() >= 12
                                    && rootPos.rule50_count() <= 80) ? 0.15 :
                                   (   rootPos.capture(lastBestMove) ? 
-                                  (   rootPos.non_pawn_material(us) > rootPos.non_pawn_material(~us) ?
-                                      .8 : 1.2) : 1);
+                                  (   rootPos.non_pawn_material(us) < rootPos.non_pawn_material(~us) ?
+                                      .65 : 1.35) : 1);
 
           double totalTime = Time.optimum() * fallingEval * reduction * bestMoveInstability * staticPosition;
 
