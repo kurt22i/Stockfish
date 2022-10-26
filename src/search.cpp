@@ -474,7 +474,9 @@ void Thread::search() {
           double bestMoveInstability = 1 + 1.7 * totBestMoveChanges / Threads.size();
           double staticPosition = (   rootPos.rule50_count() >= 40
                                    && rootPos.count<PAWN>() >= 12
-                                   && rootPos.rule50_count() <= 80) ? 0.15 : 1;
+                                   && rootPos.rule50_count() <= 80) ? 0.15 :
+                                  (   type_of(rootPos.moved_piece(lastBestMove)) == PAWN) ?
+                                      1.2 : 1;
 
           double totalTime = Time.optimum() * fallingEval * reduction * bestMoveInstability * staticPosition;
 
