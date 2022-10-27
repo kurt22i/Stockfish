@@ -476,7 +476,7 @@ void Thread::search() {
                                    && rootPos.count<PAWN>() >= 12
                                    && rootPos.rule50_count() <= 80) ? 0.15 :
                                   (   type_of(rootPos.moved_piece(lastBestMove)) == PAWN) ?
-                                      1.2 : 1;
+                                      0.95 : 1.2;
 
           double totalTime = Time.optimum() * fallingEval * reduction * bestMoveInstability * staticPosition;
 
