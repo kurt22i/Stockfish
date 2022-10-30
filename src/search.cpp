@@ -1248,8 +1248,11 @@ moves_loop: // When in check, search starts here
 
               assert((ss+1)->pv);
 
-              for (Move* m = (ss+1)->pv; *m != MOVE_NONE; ++m)
+              for (Move* m = (ss+1)->pv; *m != MOVE_NONE; ++m) {
                   rm.pv.push_back(*m);
+                  if(pos.capture(m)))
+                    ++thisThread->pvCaptures;
+              }
 
               // We record how often the best move has been changed in each iteration.
               // This information is used for time management. In MultiPV mode,
