@@ -699,6 +699,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   // in case of a capture or a pawn move.
   ++gamePly;
   ++st->rule50;
+  ++st->potentialProgress;
   ++st->pliesSinceProgress;
   ++st->pliesFromNull;
 
@@ -751,16 +752,9 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
           }
 
           st->pawnKey ^= Zobrist::psq[captured][capsq];     
-          st->pliesSinceProgress = 0;
       }
       else
-      {
           st->nonPawnMaterial[them] -= PieceValue[MG][captured];
-          if (   st->rule50 <= 1
-              && st->pliesFromNull > 2
-              && st->previous->previous->rule50 <= 20)
-            st->pliesSinceProgress = 0;
-      }
 
       if (Eval::useNNUE)
       {
@@ -780,6 +774,14 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       k ^= Zobrist::psq[captured][capsq];
       st->materialKey ^= Zobrist::psq[captured][pieceCount[captured]];
       prefetch(thisThread->materialTable[st->materialKey]);
+
+      // Conditionally reset progress counters
+      if(st->potentialProgress <= 20) {
+        st->pliesSinceProgress = 0;
+        st->potentialProgress = 0;
+      }
+      else if(st->rule50 == 0)
+        st->potentialProgress = 0;
 
       // Reset rule50 counter
       st->rule50 = 0;
@@ -856,16 +858,18 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
           // Update material
           st->nonPawnMaterial[us] += PieceValue[MG][promotion];
 
-          // Reset progress counter
-          st->pliesSinceProgress = 0;
+          // Reset progress counters
+          st->potentialProgress = 0;
       }
 
       // Update pawn hash key
       st->pawnKey ^= Zobrist::psq[pc][from] ^ Zobrist::psq[pc][to];
 
-      // Conditionally reset progress counter
-      if(st->rule50 <= 20 || pawn_passed(us, to))
+      // Conditionally reset progress counters
+      if(st->potentialProgress <= 20) {
           st->pliesSinceProgress = 0;
+          st->potentialProgress = 0;
+      }
 
       // Reset rule 50 draw counter
       st->rule50 = 0;
@@ -1029,6 +1033,7 @@ void Position::do_null_move(StateInfo& newSt) {
 
   st->key ^= Zobrist::side;
   ++st->rule50;
+  ++st->potentialProgress;
   ++st->pliesSinceProgress;
   prefetch(TT.first_entry(key()));
 
