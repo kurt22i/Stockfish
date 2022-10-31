@@ -1196,7 +1196,7 @@ moves_loop: // When in check, search starts here
                                         : -stat_bonus(newDepth);
 
               if (capture)
-                  bonus /= std::max(6 - r, 1);
+                  bonus /= 6;
 
               update_continuation_histories(ss, movedPiece, to_sq(move), bonus);
           }
