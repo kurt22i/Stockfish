@@ -275,6 +275,8 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si, Th
   // 5-6. Halfmove clock and fullmove number
   ss >> std::skipws >> st->rule50 >> gamePly;
 
+  st->pliesSinceProgress = st->rule50;
+
   // Convert from fullmove starting from 1 to gamePly starting from 0,
   // handle also common incorrect FEN with fullmove = 0.
   gamePly = std::max(2 * (gamePly - 1), 0) + (sideToMove == BLACK);
@@ -699,7 +701,6 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   // in case of a capture or a pawn move.
   ++gamePly;
   ++st->rule50;
-  ++st->potentialProgress;
   ++st->pliesSinceProgress;
   ++st->pliesFromNull;
 
@@ -775,13 +776,9 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       st->materialKey ^= Zobrist::psq[captured][pieceCount[captured]];
       prefetch(thisThread->materialTable[st->materialKey]);
 
-      // Conditionally reset progress counters
-      if(st->potentialProgress <= 20) {
+      // Conditionally reset progress counter
+      if(st->pliesSinceProgress <= 30)
         st->pliesSinceProgress = 0;
-        st->potentialProgress = 0;
-      }
-      else if(st->rule50 == 0)
-        st->potentialProgress = 0;
 
       // Reset rule50 counter
       st->rule50 = 0;
@@ -857,19 +854,14 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
 
           // Update material
           st->nonPawnMaterial[us] += PieceValue[MG][promotion];
-
-          // Reset progress counters
-          st->potentialProgress = 0;
       }
 
       // Update pawn hash key
       st->pawnKey ^= Zobrist::psq[pc][from] ^ Zobrist::psq[pc][to];
 
-      // Conditionally reset progress counters
-      if(st->potentialProgress <= 20) {
+      // Conditionally reset progress counter
+      if(st->pliesSinceProgress <= 30)
           st->pliesSinceProgress = 0;
-          st->potentialProgress = 0;
-      }
 
       // Reset rule 50 draw counter
       st->rule50 = 0;
@@ -1033,7 +1025,6 @@ void Position::do_null_move(StateInfo& newSt) {
 
   st->key ^= Zobrist::side;
   ++st->rule50;
-  ++st->potentialProgress;
   ++st->pliesSinceProgress;
   prefetch(TT.first_entry(key()));
 
