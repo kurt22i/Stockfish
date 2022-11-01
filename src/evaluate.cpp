@@ -1087,6 +1087,10 @@ Value Eval::evaluate(const Position& pos, int* complexity) {
   // Damp down the evaluation linearly when shuffling
   v = v * (195 - pos.rule50_count()) / 211;
 
+  if (   pos.count<ROOK>() >= 4
+      && pos.non_pawn_material() <= 4 * RookValueMg + 3 * BishopValueMg)
+       v = v * 9 / 10;
+
   // Guarantee evaluation does not hit the tablebase range
   v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
 
