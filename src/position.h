@@ -31,6 +31,8 @@
 
 #include "nnue/nnue_accumulator.h"
 
+constexpr int SHUFFLING_HISTORY = 2;
+
 namespace Stockfish {
 
 /// StateInfo struct stores information needed to restore a Position object to
@@ -45,6 +47,9 @@ struct StateInfo {
   Value  nonPawnMaterial[COLOR_NB];
   int    castlingRights;
   int    rule50;
+  int    shuffling[SHUFFLING_HISTORY];
+  int    shufflingIndex;
+  int    shufflingTotal;
   int    pliesFromNull;
   Square epSquare;
 
@@ -151,15 +156,19 @@ public:
   Key material_key() const;
   Key pawn_key() const;
 
+  // Repetition and shuffling  
+  bool has_game_cycle(int ply) const;
+  bool has_repeated() const;
+  int rule50_count() const;
+  int shuffling() const;
+  void update_shuffling();
+
   // Other properties of the position
   Color side_to_move() const;
   int game_ply() const;
   bool is_chess960() const;
   Thread* this_thread() const;
   bool is_draw(int ply) const;
-  bool has_game_cycle(int ply) const;
-  bool has_repeated() const;
-  int rule50_count() const;
   Score psq_score() const;
   Value psq_eg_stm() const;
   Value non_pawn_material(Color c) const;
@@ -369,6 +378,19 @@ inline int Position::game_ply() const {
 
 inline int Position::rule50_count() const {
   return st->rule50;
+}
+
+inline int Position::shuffling() const {
+  return st->shufflingTotal;
+}
+
+inline void Position::update_shuffling() {
+  int i = st->shufflingIndex;
+
+  // Invariant: shufflingTotal is equal to the sum `shuffling[0] + ... + shuffling[SHUFFLING_HISTORY-1]`
+  st->shufflingTotal += st->rule50 - st->shuffling[i];
+  st->shuffling[i]    = st->rule50;
+  st->shufflingIndex  = (i + 1) % SHUFFLING_HISTORY;
 }
 
 inline bool Position::opposite_bishops() const {
