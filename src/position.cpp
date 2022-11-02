@@ -1074,7 +1074,7 @@ Key Position::key_after(Move m) const {
 
   k ^= Zobrist::psq[pc][to] ^ Zobrist::psq[pc][from];
 
-  return (captured || type_of(pc) == PAWN)
+  return (st->pliesSinceProgress)
       ? k : adjust_key50<true>(k);
 }
 
