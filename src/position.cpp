@@ -866,7 +866,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       st->pawnKey ^= Zobrist::psq[pc][from] ^ Zobrist::psq[pc][to];
 
       // Conditionally reset progress counter
-      if(st->rule50 <= 20 || pawn_passed(us, to))
+      if(pawn_passed(us, to))
           st->pliesSinceProgress = 0;
 
       // Reset rule 50 draw counter
