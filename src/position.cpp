@@ -783,7 +783,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       st->materialKey ^= Zobrist::psq[captured][pieceCount[captured]];
       prefetch(thisThread->materialTable[st->materialKey]);
 
-      // Reset rule50 counter
+      // Reset rule 50 counter
       st->rule50 = 0;
   }
 
@@ -866,7 +866,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       st->pawnKey ^= Zobrist::psq[pc][from] ^ Zobrist::psq[pc][to];
 
       // Conditionally reset progress counter
-      if(st->rule50 <= 20 || pawn_passed(us, to))
+      if(relative_rank(us, to) >= RANK_6)
           st->pliesSinceProgress = 0;
 
       // Reset rule 50 draw counter
