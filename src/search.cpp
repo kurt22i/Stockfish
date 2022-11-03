@@ -583,7 +583,7 @@ namespace {
     {
         // Step 2. Check for aborted search and immediate draw
         if (   Threads.stop.load(std::memory_order_relaxed)
-            || pos.is_draw(ss->ply, static_cast<MainThread*>(thisThread)->rootPos.rule50_count() + depth - 1)
+            || pos.is_draw(ss->ply, (thisThread->nodes & 0x63) - static_cast<MainThread*>(thisThread)->rootPos.rule50_count())
             || ss->ply >= MAX_PLY)
             return (ss->ply >= MAX_PLY && !ss->inCheck) ? evaluate(pos)
                                                         : value_draw(pos.this_thread());
@@ -1408,7 +1408,7 @@ moves_loop: // When in check, search starts here
     moveCount = 0;
 
     // Check for an immediate draw or maximum ply reached
-    if (   pos.is_draw(ss->ply, static_cast<MainThread*>(thisThread)->rootPos.rule50_count() + depth - 1)
+    if (   pos.is_draw(ss->ply, (thisThread->nodes & 0x63) - static_cast<MainThread*>(thisThread)->rootPos.rule50_count())
         || ss->ply >= MAX_PLY)
         return (ss->ply >= MAX_PLY && !ss->inCheck) ? evaluate(pos) : VALUE_DRAW;
 
