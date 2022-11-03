@@ -31,7 +31,7 @@
 
 #include "nnue/nnue_accumulator.h"
 
-constexpr int SHUFFLING_HISTORY = 2;
+constexpr int SHUFFLING_HISTORY = 8;
 
 namespace Stockfish {
 
@@ -381,7 +381,7 @@ inline int Position::rule50_count() const {
 }
 
 inline int Position::shuffling() const {
-  return st->shufflingTotal;
+  return st->shufflingTotal + st->rule50;
 }
 
 inline void Position::update_shuffling() {
