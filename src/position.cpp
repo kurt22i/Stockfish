@@ -274,8 +274,12 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si, Th
 
   // 5-6. Halfmove clock and fullmove number
   ss >> std::skipws >> st->rule50 >> gamePly;
-
   st->pliesSinceProgress = st->rule50;
+
+  // Initialize ActiveKing variables
+  st->movesSinceActiveKing[WHITE] = st->movesSinceActiveKing[BLACK] = 0;
+  st->activeKing[WHITE] = attacks_bb<KING>(square<KING>(WHITE)) & pieces(BLACK, PAWN);
+  st->activeKing[BLACK] = attacks_bb<KING>(square<KING>(BLACK)) & pieces(WHITE, PAWN);
 
   // Convert from fullmove starting from 1 to gamePly starting from 0,
   // handle also common incorrect FEN with fullmove = 0.
@@ -697,12 +701,6 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   newSt.previous = st;
   st = &newSt;
 
-  // Increment ply counters. In particular, rule50 will be reset to zero later on
-  // in case of a capture or a pawn move.
-  ++gamePly;
-  ++st->rule50;
-  ++st->pliesSinceProgress;
-  ++st->pliesFromNull;
 
   // Used by NNUE
   st->accumulator.computed[WHITE] = false;
@@ -720,6 +718,15 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   assert(color_of(pc) == us);
   assert(captured == NO_PIECE || color_of(captured) == (type_of(m) != CASTLING ? them : us));
   assert(type_of(captured) != KING);
+  
+  // Increment ply counters. In particular, rule50 will be reset to zero later on
+  // in case of a capture or a pawn move.
+  ++gamePly;
+  ++st->rule50;
+  ++st->pliesSinceProgress;
+  ++st->pliesFromNull;
+  if (!st->activeKing[us])
+    ++st->movesSinceActiveKing[us];
 
   if (type_of(m) == CASTLING)
   {
@@ -752,8 +759,8 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
               assert(piece_on(capsq) == make_piece(them, PAWN));
           }
 
-          st->pawnKey ^= Zobrist::psq[captured][capsq];     
-          st->pliesSinceProgress = 0;
+          st->pawnKey ^= Zobrist::psq[captured][capsq];
+          st->pliesSinceProgress = 0; 
       }
       else
       {
@@ -866,12 +873,19 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       st->pawnKey ^= Zobrist::psq[pc][from] ^ Zobrist::psq[pc][to];
 
       // Conditionally reset progress counter
-      if(relative_rank(us, to) >= RANK_6)
+      if(pawn_passed(us, to))
           st->pliesSinceProgress = 0;
 
       // Reset rule 50 draw counter
       st->rule50 = 0;
+  } 
+  // Update king activity
+  else if (type_of(pc) == KING)
+  {
+      st->activeKing[us] = attacks_bb<KING>(to) & pieces(them, PAWN);
+      st->movesSinceActiveKing[us] *= !st->activeKing[us];
   }
+    
 
   // Set capture piece
   st->capturedPiece = captured;

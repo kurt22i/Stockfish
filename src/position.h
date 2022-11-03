@@ -47,6 +47,8 @@ struct StateInfo {
   int    rule50;
   int    pliesSinceProgress;
   int    pliesFromNull;
+  bool   activeKing[COLOR_NB];
+  int    movesSinceActiveKing[COLOR_NB];
   Square epSquare;
 
   // Not copied when making a move (will be recomputed anyhow)
@@ -162,6 +164,7 @@ public:
   bool has_repeated() const;
   int rule50_count() const;
   int plies_since_progress() const;
+  int moves_since_active_king(Color c) const;
   Score psq_score() const;
   Value psq_eg_stm() const;
   Value non_pawn_material(Color c) const;
@@ -375,6 +378,10 @@ inline int Position::rule50_count() const {
 
 inline int Position::plies_since_progress() const {
   return st->pliesSinceProgress;
+}
+
+inline int Position::moves_since_active_king(Color c) const {
+  return st->movesSinceActiveKing[c];
 }
 
 inline bool Position::opposite_bishops() const {
