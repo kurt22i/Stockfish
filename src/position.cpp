@@ -765,9 +765,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       else
       {
           st->nonPawnMaterial[them] -= PieceValue[MG][captured];
-          if (   st->rule50 <= 1
-              && st->pliesFromNull > 2
-              && st->previous->previous->rule50 <= 20)
+          if (st->pliesSinceProgress <= 20)
             st->pliesSinceProgress = 0;
       }
 
