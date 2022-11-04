@@ -1088,8 +1088,7 @@ Value Eval::evaluate(const Position& pos, int* complexity) {
   v = v * (195 - pos.rule50_count()) / 211;
 
   // Damp down the evaluation when progress is not being made
-  if (   pos.game_ply() >= 64
-      && pos.plies_since_progress() >= 20
+  if (   pos.plies_since_progress() >= 30
       && pos.moves_since_active_king(WHITE) >= 10
       && pos.moves_since_active_king(BLACK) >= 10)
       v = v / 2;
