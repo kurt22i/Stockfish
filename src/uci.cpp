@@ -215,12 +215,16 @@ namespace {
 
      double a = (((as[0] * m + as[1]) * m + as[2]) * m) + as[3];
      double b = (((bs[0] * m + bs[1]) * m + bs[2]) * m) + bs[3];
+     double c = 1000.0 / (1 + std::exp(a / b));
+     double d = 1000.0 / (1 + std::exp((a - 4000.0) / b)) - c;
 
      // Transform the eval to centipawns with limited range
-     double x = std::clamp(double(v), -4000.0, 4000.0);
+     double x = abs(std::clamp(double(v), -4000.0, 4000.0));
 
-     // Return the win rate in per mille units rounded to the nearest value
-     return int(0.5 + 1000 / (1 + std::exp((a - x) / b)));
+     double p = (1000.0 / (1 + std::exp((a - x) / b)) - c) / d;
+
+     // Return the eval based on win rate model, rounded to the nearest value
+     return int(0.5 + 100.0 * (std::pow(std::tan(0.7854 * (p + 1)), 0.78644) - 1));
   }
 
 } // namespace
@@ -309,14 +313,14 @@ void UCI::loop(int argc, char* argv[]) {
 /// mate <y>  Mate in 'y' moves (not plies). If the engine is getting mated,
 ///           uses negative values for 'y'.
 
-string UCI::value(Value v) {
+string UCI::value(Value v, int ply) {
 
   assert(-VALUE_INFINITE < v && v < VALUE_INFINITE);
 
   stringstream ss;
 
   if (abs(v) < VALUE_MATE_IN_MAX_PLY)
-      ss << "cp " << v * 100 / NormalizeToPawnValue;
+      ss << "cp " << v / abs(v) * win_rate_model(v, ply);
   else
       ss << "mate " << (v > 0 ? VALUE_MATE - v + 1 : -VALUE_MATE - v) / 2;
 
@@ -328,7 +332,7 @@ string UCI::value(Value v) {
 /// and a game ply based on the data gathered for fishtest LTC games.
 
 string UCI::wdl(Value v, int ply) {
-
+//THIS IS BROKEN
   stringstream ss;
 
   int wdl_w = win_rate_model( v, ply);
