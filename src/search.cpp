@@ -1304,7 +1304,7 @@ moves_loop: // When in check, search starts here
       // If the move is worse than some previously searched move, remember it to update its stats later
       if (move != bestMove)
       {
-          if (capture && captureCount < 32)
+          if (capture && type_of(movedPiece) != PAWN && captureCount < 32)
               capturesSearched[captureCount++] = move;
 
           else if (!capture && quietCount < 64)
