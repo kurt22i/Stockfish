@@ -1084,16 +1084,18 @@ Value Eval::evaluate(const Position& pos, int* complexity) {
       v = (nnue * scale + optimism * (scale - 754)) / 1024;
   }
 
-  // Damp down the evaluation linearly when shuffling
-  v = v * (195 - pos.rule50_count()) / 211;
-
-  // Damp down the evaluation when progress is not being made
+  // Damp down the evaluation severely when progress is not being made
   if (   pos.game_ply() > 64
       && pos.plies_since_progress() >= 30
       && pos.count<PAWN>() >= 4
       && pos.moves_since_active_king(WHITE) >= 10
       && pos.moves_since_active_king(BLACK) >= 10)
-      v = v * (195 - pos.plies_since_progress()) / 211;
+      v = v * (165 - pos.plies_since_progress()) / 211;
+  
+  // Damp down the evaluation linearly when shuffling
+  else
+    v = v * (195 - pos.rule50_count()) / 211;
+
 
   // Guarantee evaluation does not hit the tablebase range
   v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
