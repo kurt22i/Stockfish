@@ -1084,9 +1084,6 @@ Value Eval::evaluate(const Position& pos, int* complexity) {
       v = (nnue * scale + optimism * (scale - 754)) / 1024;
   }
 
-  // Damp down the evaluation linearly when shuffling
-  v = v * (195 - pos.rule50_count()) / 211;
-
   // Damp down the evaluation when progress is not being made
   if (   !useClassical
       && pos.count<PAWN>() >= 7)
