@@ -1085,7 +1085,8 @@ Value Eval::evaluate(const Position& pos, int* complexity) {
   }
 
   // Damp down the evaluation when progress is not being made
-  if (   pos.game_ply() > 64
+  if (   !useClassical
+      && pos.game_ply() > 64
       && pos.plies_since_progress() >= 30
       && pos.count<PAWN>() >= 4
       && pos.moves_since_active_king(WHITE) >= 10
